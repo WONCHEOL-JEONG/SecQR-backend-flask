@@ -25,9 +25,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # MongoDB 설정
-mongo_uri = os.getenv('MONGO_URI')
-db_name = os.getenv('DB_NAME')
-collection_name = os.getenv('COLLECTION_NAME')
+mongo_uri = os.getenv('mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR')
+db_name = os.getenv('prediction')
+collection_name = os.getenv('white')
 
 client = MongoClient(mongo_uri)
 db = client[db_name]
