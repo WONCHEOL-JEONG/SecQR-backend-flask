@@ -1,11 +1,11 @@
 Flask
 pymongo
 torch
-transformers==4.11.3
+transformers
 dnspython
 tld
 numpy<2
-scikit-learn==1.3.2
+scikit-learn
 flask-cors
 python-dotenv
 gunicorn
