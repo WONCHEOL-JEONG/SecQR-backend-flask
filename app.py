@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # MongoDB 설정
-mongo_uri = os.getenv('mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR')
+mongo_uri = 'mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR'
 db_name = 'prediction'
 collection_name = 'white'
 
