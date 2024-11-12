@@ -42,9 +42,9 @@ for handler in app.logger.handlers:
 
 # MongoDB 설정
 load_dotenv(os.path.join('..', 'backend_flask', '.env'))
-mongo_uri = 'MONGO_URI'
-db_name = 'DB_NAME'
-collection_name = 'COLLECTION_NAME'
+mongo_uri = 'mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR'
+db_name = 'prediction'
+collection_name = 'white'
 
 client = MongoClient(mongo_uri)
 db = client[db_name]
@@ -68,7 +68,7 @@ try:
 except Exception as e:
     app.logger.error(f"Error loading BERT model or tokenizer: {e}")
     
-     
+
 # 도메인 추출 함수
 def extract_domain_from_url(url):
     parsed_url = urlparse(url)
