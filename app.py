@@ -42,9 +42,9 @@ for handler in app.logger.handlers:
 
 # MongoDB 설정
 load_dotenv(os.path.join('..', 'backend_flask', '.env'))
-mongo_uri = os.getenv('mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR')
-db_name = os.getenv('prediction')
-collection_name = os.getenv('white')
+mongo_uri = 'mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR'
+db_name = 'prediction'
+collection_name = 'white'
 
 client = MongoClient(mongo_uri)
 db = client[db_name]
