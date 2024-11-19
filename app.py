@@ -25,6 +25,7 @@ CORS(app)
 log_file_path = os.path.join(os.path.dirname(__file__), 'app.log')
 log_file_path = os.path.abspath(log_file_path)
 
+
 # 로그 파일 설정
 file_handler = logging.FileHandler(log_file_path)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -53,8 +54,10 @@ collection = db[collection_name]
 collection.create_index('url', unique=True)
 
 # 모델 로드
+model_path = os.path.join(os.path.dirname(__file__), 'model.pkl')
 try:
-    model = pickle.load(open('model.pkl', 'rb'))
+    # model = pickle.load(open('model.pkl', 'rb'))
+    model = pickle.load(open(model_path, 'rb'))
     app.logger.info("Model loaded successfully")
 except Exception as e:
     app.logger.error(f"Error loading model: {e}")
@@ -68,7 +71,7 @@ try:
 except Exception as e:
     app.logger.error(f"Error loading BERT model or tokenizer: {e}")
     
-     
+
 # 도메인 추출 함수
 def extract_domain_from_url(url):
     parsed_url = urlparse(url)
@@ -177,16 +180,20 @@ def extract_features(url):
     with torch.no_grad():
         outputs = bert_model(input_ids, attention_mask=attention_mask)
         hidden_states = outputs.hidden_states
+        # hidden_states = outputs[2]
 
     token_vecs = [torch.mean(hidden_states[layer][0], dim=0) for layer in range(-4, 0)]
-    bert_features = torch.stack(token_vecs).numpy().flatten()
+    # bert_features = torch.stack(token_vecs).numpy().flatten()
+    bert_features = torch.stack(token_vecs).numpy()
+    return bert_features
 
-    protocol, domain, subdomain, path, params = parse_url_components(url)
-    url_component_features = extract_component_features(protocol, domain, subdomain, path, params)
-    additional_features = np.array(list(url_component_features.values()))
+    # protocol, domain, subdomain, path, params = parse_url_components(url)
+    # url_component_features = extract_component_features(protocol, domain, subdomain, path, params)
+    # additional_features = np.array(list(url_component_features.values()))
 
-    combined_features = np.concatenate([bert_features, additional_features])
-    return combined_features
+    # combined_features = np.concatenate([bert_features, additional_features])
+    # print(f"Combined features length: {len(combined_features)}")
+    # return combined_features
 
 def jsonify_with_objectid(data):
     if isinstance(data, dict):
@@ -205,12 +212,16 @@ def jsonify_with_objectid(data):
 @app.route('/')
 def home():
     prediction_api_url = os.getenv('PREDICTION_API_URL', '/predict')
+    # prediction_api_url = os.getenv('PREDICTION_API_URL')
     return render_template('index.html', prediction_api_url=prediction_api_url)
     
 @app.route('/predict', methods=['POST'])
 def predict():
     app.logger.debug("Received POST request")
-    url = request.form['url']
+    # JSON 형식으로 받은 데이터를 파싱
+    data = request.get_json()
+    url = data['url']  # JSON에서 'url' 값을 추출
+    #url = request.form['url']
     print(f"Received URL: {url}")
     app.logger.info(f"Received URL: {url}")
     
