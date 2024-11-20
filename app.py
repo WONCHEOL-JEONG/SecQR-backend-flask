@@ -219,21 +219,11 @@ def home():
 def predict():
     app.logger.debug("Received POST request")
     # JSON 형식으로 받은 데이터를 파싱
-    try:
-        data = request.get_json(force=True)
-        if not data:
-            raise ValueError("No JSON data found in the request")
-    except Exception as e:
-        app.logger.error(f"Error parsing JSON data: {e}")
-        return jsonify({'error': 'Invalid JSON format'}), 400
-    
-    try:
-        url = data['url']
-        print(f"Received URL: {url}")
-        app.logger.info(f"Received URL: {url}")
-    except KeyError:
-        app.logger.error("Missing 'url' key in JSON data")
-        return jsonify({'error': "'url' key is required"}), 400
+    data = request.get_json()
+    url = data['url']  # JSON에서 'url' 값을 추출
+    #url = request.form['url']
+    print(f"Received URL: {url}")
+    app.logger.info(f"Received URL: {url}")
     
     try:
         # 1. 도메인 추출
@@ -309,4 +299,4 @@ def predict():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5500))
     app.logger.info(f"Starting server on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
