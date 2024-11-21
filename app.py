@@ -12,7 +12,6 @@ import pickle
 from dotenv import load_dotenv
 import os
 import logging
-import numpy as np
 
 # 환경 변수 로드
 load_dotenv()
@@ -21,28 +20,30 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# 로그 파일 설정
-log_file_path = os.path.join(os.path.dirname(__file__), 'app.log')
-log_file_path = os.path.abspath(log_file_path)
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# # 로그 파일 설정
+# log_file_path = os.path.join(os.path.dirname(__file__), 'app.log')
+# log_file_path = os.path.abspath(log_file_path)
 
-# 로그 파일 설정
-file_handler = logging.FileHandler(log_file_path)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+# # 로그 파일 설정
+# file_handler = logging.FileHandler(log_file_path)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# file_handler.setFormatter(formatter)
+# file_handler.setLevel(logging.DEBUG)
 
-app.logger = logging.getLogger(__name__)
-app.logger.setLevel(logging.DEBUG)
-app.logger.addHandler(file_handler)
+# app.logger = logging.getLogger(__name__)
+# app.logger.setLevel(logging.DEBUG)
+# app.logger.addHandler(file_handler)
 
-print(f"Current log level: {logging.getLevelName(app.logger.level)}")
-for handler in app.logger.handlers:
-    print(f"Handler: {handler}, Level: {logging.getLevelName(handler.level)}")
-
+# print(f"Current log level: {logging.getLevelName(app.logger.level)}")
+# for handler in app.logger.handlers:
+#     print(f"Handler: {handler}, Level: {logging.getLevelName(handler.level)}")
 
 # MongoDB 설정
-load_dotenv(os.path.join('..', 'backend_flask', '.env'))
+# load_dotenv(os.path.join('..', 'backend_flask', '.env'))
 mongo_uri = 'mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR'
 db_name = 'prediction'
 collection_name = 'white'
@@ -54,25 +55,22 @@ collection = db[collection_name]
 collection.create_index('url', unique=True)
 
 # 모델 로드
-model_path = os.path.join(os.path.dirname(__file__), 'model.pkl')
+# model_path = os.path.join(os.path.dirname(__file__), 'model.pkl')
 try:
-    # model = pickle.load(open('model.pkl', 'rb'))
-    model = pickle.load(open(model_path, 'rb'))
-    app.logger.info("Model loaded successfully")
+    model = pickle.load(open('model.pkl', 'rb'))
+    logger.info("Model loaded successfully")
 except Exception as e:
-    app.logger.error(f"Error loading model: {e}")
+    logger.error(f"Error loading model: {e}")
 
 # BERT 모델 및 토크나이저 로드
 try:
     bert_model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    app.logger.info("BERT model and tokenizer loaded successfully")
-    
+    logger.info("BERT model and tokenizer loaded successfully")
 except Exception as e:
-    app.logger.error(f"Error loading BERT model or tokenizer: {e}")
-    
+    logger.error(f"Error loading BERT model or tokenizer: {e}")
 
-# 도메인 추출 함수
+# 도메인 추출 함수(추가)
 def extract_domain_from_url(url):
     parsed_url = urlparse(url)
     if parsed_url.netloc:  # netloc(도메인)이 있는지 확인
@@ -81,7 +79,7 @@ def extract_domain_from_url(url):
     else:
         return url
 
-# URL 정보 추출 함수 (판단근거로 사용)
+# URL 정보 추출 함수 (판단근거로 사용) (추가)
 def get_url_info(url):
     url_info = {}
 
@@ -93,8 +91,7 @@ def get_url_info(url):
         url_info['domain_len'] = len(parsed_tld.domain)
         url_info['tld'] = parsed_tld.tld
     except Exception as e:
-        # logger.error(f"Error parsing TLD: {e}")
-        app.logger.error(f"Error parsing TLD: {e}")
+        logger.error(f"Error parsing TLD: {e}")
         url_info['domain_len'] = 0
         url_info['tld'] = ""
 
@@ -105,7 +102,6 @@ def get_url_info(url):
                 return 0
             return 1
         return 0
-    
     url_info['sub_domain'] = having_Sub_Domain(parsed_tld)
 
     parsed_url = urlparse(url)
@@ -141,8 +137,8 @@ def get_url_info(url):
             url_info['abnormal_url'] = 1
 
     return url_info
-   
-# URL 구성 요소 추출 함수 정의
+
+# URL 구성 요소 추출 함수 정의(추가)
 def parse_url_components(url):
     parsed_url = urlparse(url)
     protocol = parsed_url.scheme
@@ -152,7 +148,7 @@ def parse_url_components(url):
     subdomain = ".".join(parsed_url.netloc.split(".")[:-2])
     return protocol, domain, subdomain, path, params
 
-# 각 구성 요소의 특징 추출 함수 정의
+# 각 구성 요소의 특징 추출 함수 정의(추가)
 def extract_component_features(protocol, domain, subdomain, path, params):
     features = {}
     features['protocol_http'] = 1 if protocol == "http" else 0
@@ -168,32 +164,24 @@ def standardize_url(url):
         url = url + '/'
     return url
 
+
 def extract_features(url):
-    url = standardize_url(url)
     if not url.startswith(("http://", "https://")):
         url = "http://" + url
 
-    inputs = tokenizer.encode_plus(url, return_tensors='pt', add_special_tokens=True, max_length=128, truncation=True)
+    inputs = tokenizer.encode_plus(url, return_tensors='pt', add_special_tokens=True, max_length=512, truncation=True)
     input_ids = inputs['input_ids']
-    attention_mask = inputs.get('attention_mask', None)
 
+    attention_mask = inputs.get('attention_mask')
+    #attention_mask = inputs.get('attention_mask', None)
+    
     with torch.no_grad():
         outputs = bert_model(input_ids, attention_mask=attention_mask)
-        hidden_states = outputs.hidden_states
-        # hidden_states = outputs[2]
+        # hidden_states = outputs.hidden_states
+        hidden_states = outputs[2]
 
     token_vecs = [torch.mean(hidden_states[layer][0], dim=0) for layer in range(-4, 0)]
-    # bert_features = torch.stack(token_vecs).numpy().flatten()
-    bert_features = torch.stack(token_vecs).numpy()
-    return bert_features
-
-    # protocol, domain, subdomain, path, params = parse_url_components(url)
-    # url_component_features = extract_component_features(protocol, domain, subdomain, path, params)
-    # additional_features = np.array(list(url_component_features.values()))
-
-    # combined_features = np.concatenate([bert_features, additional_features])
-    # print(f"Combined features length: {len(combined_features)}")
-    # return combined_features
+    return torch.stack(token_vecs).numpy()
 
 def jsonify_with_objectid(data):
     if isinstance(data, dict):
@@ -202,38 +190,59 @@ def jsonify_with_objectid(data):
         return [jsonify_with_objectid(item) for item in data]
     elif isinstance(data, ObjectId):
         return str(data)
-    elif isinstance(data, np.integer): 
-        return int(data)
-    elif isinstance(data, np.floating): 
-        return float(data)
     else:
         return data
-            
+
 @app.route('/')
 def home():
-    prediction_api_url = os.getenv('PREDICTION_API_URL', '/predict')
     # prediction_api_url = os.getenv('PREDICTION_API_URL')
+    prediction_api_url = os.getenv('PREDICTION_API_URL', '/predict')
     return render_template('index.html', prediction_api_url=prediction_api_url)
-    
+
 @app.route('/predict', methods=['POST'])
 def predict():
     app.logger.debug("Received POST request")
     # JSON 형식으로 받은 데이터를 파싱
-    try:
-        data = request.get_json(force=True)
-        if not data:
-            raise ValueError("No JSON data found in the request")
-    except Exception as e:
-        app.logger.error(f"Error parsing JSON data: {e}")
-        return jsonify({'error': 'Invalid JSON format'}), 400
+    data = request.get_json()
+    url = data['url']  # JSON에서 'url' 값을 추출
+    #url = request.form['url']
+    print(f"Received URL: {url}")
+    app.logger.info(f"Received URL: {url}")
     
-    try:
-        url = data['url']
-        print(f"Received URL: {url}")
-        app.logger.info(f"Received URL: {url}")
-    except KeyError:
-        app.logger.error("Missing 'url' key in JSON data")
-        return jsonify({'error': "'url' key is required"}), 400
+    #원래꺼
+    # url = request.form['url']
+    # app.logger.info(f"Received URL: {url}")
+
+    # try:
+    #     # 1. 도메인 추출
+    #     url_info = collection.find_one({"url": url})
+    #     app.logger.info(f"URL info from DB: {url_info}")
+
+    #     if not url_info:
+    #         url_info = get_url_info(url)
+    #         app.logger.info(f"Extracted URL info: {url_info}")
+
+    #         features = extract_features(url)
+    #         app.logger.info(f"Extracted features: {features}")
+
+    #         prediction = model.predict(features.reshape(1, -1))
+    #         app.logger.info(f"Prediction: {prediction}")
+
+    #         url_info['predicted_type'] = prediction[0]
+    #         try:
+    #             collection.insert_one(url_info)
+    #         except Exception as e:
+    #             app.logger.error(f"Error inserting URL info into DB: {e}")
+    #     else:
+    #         prediction = [url_info['predicted_type']]
+
+    #     url_info_serializable = jsonify_with_objectid(url_info)
+    #     app.logger.info(f"URL info serializable: {url_info_serializable}")
+
+    #     return jsonify({
+    #         'prediction': prediction[0],
+    #         'url_info': url_info_serializable
+    #     })
     
     try:
         # 1. 도메인 추출
@@ -302,11 +311,12 @@ def predict():
             'url_info': url_info_serializable
         })
 
+
     except Exception as e:
         app.logger.error(f"Error during prediction: {e}")
         return jsonify({'error': 'Error during prediction'}), 500
-        
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5500))
+    port = int(os.environ.get('PORT', 8080))
     app.logger.info(f"Starting server on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=True)
