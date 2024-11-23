@@ -43,7 +43,7 @@ for handler in app.logger.handlers:
 # MongoDB 설정
 load_dotenv(os.path.join('..', 'backend_flask', '.env'))
 # mongo_uri = 'mongodb+srv://ajacheol:gmomRqvRlvmV8pKe@clustersecqr.xksqi.mongodb.net/?retryWrites=true&w=majority&appName=ClusterSecQR'
-mongo_uri = 'mongodb+srv://ohju011223:gyfxyDl095pxipbn@cluster0.xwe9x.mongodb.net/'
+mongo_uri = 'mongodb+srv://ohju011223:gyfxyDl095pxipbn@cluster0.xwe9x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 db_name = 'prediction'
 # collection_name = 'white'
 collection_name = 'urls'
